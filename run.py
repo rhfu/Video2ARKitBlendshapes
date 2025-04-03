@@ -33,13 +33,14 @@ def detect_video_face_animation(input_path, output_path):
     print("Find videos")
 
     video_files = [f for f in os.listdir(input_path) if os.path.isfile(os.path.join(input_path, f)) and f.endswith('.mp4')] 
+    i = 0
     for video_file in video_files:
         print(f'Processing: {video_file}')
         input_file = os.path.join(input_path, video_file)
         output_file = os.path.join(output_path, video_file.replace('.mp4','.json'))
 
         cap = cv2.VideoCapture(input_file)
-        frame_rate = cap.get(cv2.CAP_PROP_FPS)
+        frame_rate = int(cap.get(cv2.CAP_PROP_FPS))
         print("FPS: ", frame_rate)
         start_time = time.time()
         face_blendshapes_out = {'startTime': start_time, 'endTime': start_time, 'fps': frame_rate,  'blendshapes': {}}
@@ -50,13 +51,14 @@ def detect_video_face_animation(input_path, output_path):
                 break
 
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
-            detection_result = detector.detect_for_video(mp_image,frame_rate)
+            detection_result = detector.detect_for_video(mp_image, i)
             face_blendshapes = detection_result.face_blendshapes[0]
             for face_blendshapes_category in face_blendshapes:
                 if face_blendshapes_category.category_name in face_blendshapes_out['blendshapes']:
                     face_blendshapes_out['blendshapes'][face_blendshapes_category.category_name].append(face_blendshapes_category.score)
                 else:
                     face_blendshapes_out['blendshapes'][face_blendshapes_category.category_name] = [face_blendshapes_category.score]
+            i = i + 1       
         cap.release()
         end_time = time.time()
         face_blendshapes_out['endTime'] = end_time
